@@ -106,7 +106,7 @@ function resultMessage(message,success=false,db=true) {
   else{
     const container = document.querySelector("#result-message");
     const parent = container.parentNode;
-    parent.insertBefore(container, parent.firstChild);
+    parent.insertBefore(container, document.getElementById('paypal-button-container'));
     container.style.color = "red";
     container.innerHTML = message;
   }

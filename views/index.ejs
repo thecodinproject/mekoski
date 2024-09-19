@@ -59,7 +59,7 @@
 .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
+    z-index: 9999; /* Sit on top */
     left: 0;
     top: 0;
     width: 100%; /* Full width */
@@ -69,17 +69,17 @@
 }
 
 .modal-content {
-    width: 500px;
-    max-width: 80vw;
     text-align: center;
     background-color: #ffffff;
-    margin: auto; /* Center the modal */
     padding: 20px;
     border-radius: 8px; /* Rounded corners */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
-    position: relative; /* Positioning context */
-    top: 26%; /* Move down 50% of the viewport height */
-    transform: translateY(-50%); /* Adjust position to be centered */
+    width: 90%; /* Responsive width */
+    max-width: 500px; /* Maximum width */
+    position: fixed; /* Fixed positioning */
+    top: 50%; /* Move down 50% of the viewport height */
+    left: 50%; /* Move right 50% of the viewport width */
+    transform: translate(-50%, -50%); /* Adjust position to be centered */
     animation: fadeIn 0.3s; /* Fade-in animation */
 }
 
@@ -152,8 +152,8 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Contact Us</h2>
-            <p>Email: email@gmail.com</p>
-            <p>Phone: (555) 555-5555</p>
+            <p>Email: <a href="mailto:hgn.shelly@yahoo.com">hgn.shelly@yahoo.com</a></p>
+            <p>Phone: (586) 344-8776</p>
         </div>
     </div>
 <script>
