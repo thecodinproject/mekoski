@@ -4,11 +4,196 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mekoski Wine Tasting Event</title>
+
+    <style>
+        body {
+            background-color: #e3cdab;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: #81376a;
+            color:tan;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .content {
+            margin-top: 90px; /* To avoid content being hidden behind the header */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+}
+
+.modal-content {
+    width: 500px;
+    max-width: 80vw;
+    text-align: center;
+    background-color: #ffffff;
+    margin: auto; /* Center the modal */
+    padding: 20px;
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    position: relative; /* Positioning context */
+    top: 26%; /* Move down 50% of the viewport height */
+    transform: translateY(-50%); /* Adjust position to be centered */
+    animation: fadeIn 0.3s; /* Fade-in animation */
+}
+
+/* Close button */
+.close {
+    color: #888;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #d9534f; /* Red color on hover */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Title Styles */
+.modal-content h2 {
+    color: #333;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Paragraph Styles */
+.modal-content p {
+    font-family: 'Arial', sans-serif;
+    color: #555;
+    margin: 10px 0;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+    </style>
+
 </head>
-<body style="background-color: #e3cdab;">
-    <img src="images/winetasting.png" style="    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    max-height: 98vh;"></img>
+<body>
+    <div class="header">
+        <button class="button"onclick="openModal()">Contact Us</button>
+        <h1>Mekoski Fundraiser</h1>
+        <button class="button" onclick="smoothScroll('paypal-button-container');">Purchase Tickets</button>
+    </div>
+    <div class="content">
+        <img src="images/winetasting.png" style="display: block; margin-left: auto; margin-right: auto; max-height: 98vh;max-width: 98vw;" alt="Wine Tasting">
+        <p id='ticket_message'></p>
+            There are only <span id="tickets"></span> tickets left!
+        </p>
+
+            <div id="paypal-button-container" style="flex:1;width: 350px;"></div>
+            <p id="result-message"></p>
+
+    </div>
+
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Contact Us</h2>
+            <p>Email: email@gmail.com</p>
+            <p>Phone: (555) 555-5555</p>
+        </div>
+    </div>
+<script>
+    const tickets=document.getElementById('tickets');
+    const ticket_message=document.getElementById('ticket_message');
+    loadtickets()
+
+     async function loadtickets() {
+    //   reloadCredits.classList.remove('rotated')
+    //   void reloadCredits.offsetWidth; 
+    //   reloadCredits.classList.add('rotated')
+      tickets.innerText="..."
+      const response = await fetch(location.origin+"/tickets");
+      console.log(response)
+      const res = await response.json().catch((error) => {
+          console.error(error);
+        });
+        console.log(res)
+      if (res !==undefined) {
+        const ticket_amount=27-res
+        if( ticket_amount < 2 ){
+            if (ticket_amount==1){ticket_message.innerText='There is only 1 ticket left!'}
+            else {ticket_message.innerText='Sorry, there are no tickets left!'}
+        }
+        else {tickets.innerText=ticket_amount.toString()}
+      }
+    //   else {
+    //     credits="N/A"; 
+    //   }
+    }
+
+    function smoothScroll(targetId) {
+            const targetElement = document.getElementById(targetId);
+            targetElement.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openModal() {
+            document.getElementById("contactModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("contactModal").style.display = "none";
+        }
+
+        // Update the Contact Us button to call openModal()
+        document.querySelector('.header .button').onclick = openModal;
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById("contactModal");
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+</script>
+<script src="<%= prod ? 'https://www.paypal.com/sdk/js?client-id=AQ2ASsDCEeLFOyZmHOl11WghAlGbOYXO7XHg0-z_bpEAozuFUmfkLKnREzTI_oqSNdO6YezcsiIFKNVt&currency=USD' : 'https://www.paypal.com/sdk/js?client-id=test&currency=USD' %>"></script>
+<script src="../pp.js"></script>
 </body>
 </html>

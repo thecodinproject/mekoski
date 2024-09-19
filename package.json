@@ -8,9 +8,12 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.21.0",
     "flash": "^1.1.0",
+    "mailchecker": "^6.0.9",
+    "nodemailer": "^6.9.15",
     "nodemon": "^3.1.5",
     "pg": "^8.13.0"
   },
