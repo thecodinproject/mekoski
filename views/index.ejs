@@ -7,20 +7,23 @@
 
     <style>
         body {
-            background-color: #e3cdab;
+            /* background-color: #e3cdab; */
             margin: 0;
             padding: 0;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            background-image: url('images/winetasting.png');
+            backdrop-filter: blur(11px);
         }
         .header {
             text-align: center;
-            position: fixed;
+            position: sticky;
             top: 0;
             left: 0;
             right: 0;
             background-color: #81376a;
             color:tan;
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around;
             align-items: center;
             padding: 10px 20px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
@@ -33,18 +36,20 @@
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 25px;
+            border-radius: 10px;
+            box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
             padding: 10px 20px;
             cursor: pointer;
             text-align: center;
             text-decoration: none;
             font-size: 16px;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
         }
         .button:hover {
             background-color: #45a049;
         }
         .content {
-            margin-top: 90px; /* To avoid content being hidden behind the header */
+            margin-top: 20px; /* To avoid content being hidden behind the header */
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -112,6 +117,14 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+#ticket_message {
+    background: #d7bc98;
+    padding: 6px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+            border-radius: 10px; 
+    font-size: larger;
+}
     </style>
 
 </head>
@@ -122,9 +135,12 @@
         <button class="button" onclick="smoothScroll('paypal-button-container');">Purchase Tickets</button>
     </div>
     <div class="content">
-        <img src="images/winetasting.png" style="display: block; margin-left: auto; margin-right: auto; max-height: 98vh;max-width: 98vw;" alt="Wine Tasting">
-        <p id='ticket_message'></p>
-            There are only <span id="tickets"></span> tickets left!
+        <img src="images/winetasting.png" style="
+        box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+            border-radius: 10px; 
+            display: block; margin-left: auto; margin-right: auto; max-height: 98vh;max-width: 98vw;" alt="Wine Tasting">
+        <p id='ticket_message'>
+            There are only <span style='font-weight: bold;' id="tickets"></span> tickets left!
         </p>
 
             <div id="paypal-button-container" style="flex:1;width: 350px;"></div>
