@@ -58,7 +58,7 @@
         }
 
         /* Modal Styles */
-.modal {
+        .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
     z-index: 9999; /* Sit on top */
@@ -78,9 +78,11 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
     width: 90%; /* Responsive width */
     max-width: 500px; /* Maximum width */
-    position: fixed; /* Fixed positioning */
-    top: 50%; /* Move down 50% of the viewport height */
-    left: 50%; /* Move right 50% of the viewport width */
+    max-height: 80vh; /* Maximum height of modal content */
+    overflow-y: auto; /* Enable vertical scrolling */
+    position: absolute; /* Changed to absolute positioning */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
     transform: translate(-50%, -50%); /* Adjust position to be centered */
     animation: fadeIn 0.3s; /* Fade-in animation */
 }
@@ -162,7 +164,7 @@
     <!-- Modal for Contact Us -->
     <div id="contactModal" class="modal">
         <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
+            <span  tabindex="0"  class="close" onclick="closeModal()">&times;</span>
             <h2>Contact Us</h2>
             <p>Email: <a href="mailto:hgn.shelly@yahoo.com?subject=Terry Mekoski Wine Fundraiser">hgn.shelly@yahoo.com</a></p>
         </div>
@@ -186,20 +188,34 @@
         style="padding-bottom: 10px;">
             <label for="ticket-count">How many Tickets:</label>
             <input type="number" id="ticket-count" name="ticket-count" min="1" max="1" required style="width: 40px;" value="1">
-            <div class="button" style='margin-top: 15px;' onclick="openppModal()">Buy</div>
+            <div  tabindex="0" id="bbutt" class="button" style='margin-top: 15px;' onclick="openppModal()">Buy</div>
         </form>
         <br>
-
         <div id="pp" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="closeModal()">&times;</span>
-                <h2>Ticket Amount: <span id="pTix"> </span></h2>
-                <h3>Total Cost: $<span id='cost'></span></h3>
-                <p>Pay Using:</p>
-                <div id="paypal-button-container" >
-                    <!-- style="width: 350px; height: 0; overflow: hidden; transition: height 0.5s;"> -->
+                <span  tabindex="0"  class="close" onclick="closeModal()">&times;</span>
+                
+                <!-- First Page -->
+                <div id="first-page">
+                    <h2>Ticket Amount: <span id="pTix"> </span></h2>
+                    <h3>Total Cost: $<span id='cost'></span></h3>
+                    <form id="attendee-form">
+                        <!-- Attendee inputs will be dynamically generated here -->
+                    </form>
+                    <button  class="button" type="button" onclick="showPaymentPage()">Purchase</button>
                 </div>
-                <p id="result-message"></p>
+        
+                <!-- Second Page -->
+                <div id="second-page" style="display: none;">
+                    <button  class="button" onclick="showFirstPage()">Back</button>
+                    <h2>Ticket Amount: <span id="pTix2"> </span></h2>
+                    <h3>Total Cost: $<span id='cost2'></span></h3>
+                    <p>Pay Using:</p>
+                    <div id="paypal-button-container">
+                        <!-- PayPal Button Here -->
+                    </div>
+                    <p id="result-message"></p>
+                </div>
             </div>
         </div>
         
@@ -210,6 +226,24 @@
     const tickets=document.getElementById('tickets');
     const ticket_message=document.getElementById('ticket_message');
     const ticket_count=document.getElementById('ticket-count')
+    let current_ticket_count=0;
+
+    document.getElementById('bbutt').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            this.click(); // Trigger the click event
+        }
+    });
+
+    let x = document.querySelectorAll('.close');
+
+    // Add keyup event listener to each button
+    x.forEach(button => {
+        button.addEventListener('keyup', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                this.click(); // Trigger the click event
+            }
+        });
+    });
 
     // Listen for input changes
     ticket_count.addEventListener('input', function() {
@@ -225,6 +259,11 @@
             ticket_count.value = ticket_count.min; // Set to min
         }
     });
+    ticket_count.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent form submission
+    }
+});
 
     loadtickets()
 
@@ -247,7 +286,7 @@
             }
             else {
                 tickets.innerText=ticket_amount.toString()
-                ticket_count.max=ticket_amount
+                ticket_count.max=Math.min(ticket_amount,ticket_amount)//max amount of tickets at a time??
             }
       }
     //   else {
@@ -281,12 +320,79 @@
     }
 
     function openppModal() {
-        document.getElementById('pTix').textContent=document.getElementById('ticket-count').value.toString()
-        document.getElementById('cost').textContent=(document.getElementById('ticket-count').value*42).toString()
+        const ticketCount = document.getElementById('ticket-count').value;
+        document.getElementById('pTix').textContent = ticketCount.toString();
+        document.getElementById('cost').textContent = (ticketCount * 42).toString();
+        document.getElementById('pTix2').textContent = ticketCount.toString();
+        document.getElementById('cost2').textContent = (ticketCount * 42).toString();
         document.getElementById("pp").style.display = "block";
+        if (current_ticket_count.toString()==ticketCount){current_ticket_count=ticketCount; return}
+        current_ticket_count=ticketCount
+        // Clear existing attendee fields
+        const attendeeForm = document.getElementById('attendee-form');
+        attendeeForm.innerHTML = ''; // Clear previous inputs
+
+        // Create inputs for attendees
+        for (let i = 1; i <= ticketCount; i++) {
+            const label = document.createElement('label');
+            label.setAttribute('for', `attendee-name${i}`);
+            label.textContent = `Attendee ${i} Name:`;
+            
+            const input = document.createElement('input');
+            input.setAttribute('type', 'text');
+            input.setAttribute('id', `attendee-name${i}`);
+            input.setAttribute('name', `attendee-name${i}`);
+            input.setAttribute('required', true);
+
+//             input.addEventListener('focus', () => {
+//     input.scrollIntoView({ behavior: 'smooth', block:"center" });
+// });
+
+            attendeeForm.appendChild(label);
+            attendeeForm.appendChild(input);
+            attendeeForm.appendChild(document.createElement('br'));
+            attendeeForm.appendChild(document.createElement('br')); // Extra space
+        }
+
+        // Add phone number field
+        const phoneLabel = document.createElement('label');
+        phoneLabel.setAttribute('for', 'phone-number');
+        phoneLabel.textContent = 'Phone Number:';
+        
+        const phoneInput = document.createElement('input');
+        phoneInput.setAttribute('type', 'tel');
+        phoneInput.setAttribute('id', 'phone-number');
+        phoneInput.setAttribute('name', 'phone-number');
+        phoneInput.setAttribute('required', true);
+
+        attendeeForm.appendChild(phoneLabel);
+        attendeeForm.appendChild(phoneInput);
+        attendeeForm.appendChild(document.createElement('br'));
+        attendeeForm.appendChild(document.createElement('br')); // Extra space
+
+        // Add email field
+        const emailLabel = document.createElement('label');
+        emailLabel.setAttribute('for', 'email');
+        emailLabel.textContent = 'Email Address:';
+        
+        const emailInput = document.createElement('input');
+        emailInput.setAttribute('type', 'email');
+        emailInput.setAttribute('id', 'email');
+        emailInput.setAttribute('name', 'email');
+        emailInput.setAttribute('required', true);
+
+        attendeeForm.appendChild(emailLabel);
+        attendeeForm.appendChild(emailInput);
+        attendeeForm.appendChild(document.createElement('br'));
+        attendeeForm.appendChild(document.createElement('br')); // Extra space
+
+        // Show the modal and reset to the first page
+        document.getElementById('first-page').style.display = 'block';
+        document.getElementById('second-page').style.display = 'none';
     }
 
     function closeModal() {
+        console.log('closemodals')
         document.getElementById("contactModal").style.display = "none";
         document.getElementById("pp").style.display = "none";
         // document.getElementById('paypal-button-container').style.height='0px'
@@ -320,6 +426,18 @@
         // Example: paypal.Buttons().render('#paypal-button-container');
 
     }
+
+
+    function showPaymentPage() {
+        document.getElementById('first-page').style.display = 'none';
+        document.getElementById('second-page').style.display = 'block';
+    }
+
+    function showFirstPage() {
+        document.getElementById('second-page').style.display = 'none';
+        document.getElementById('first-page').style.display = 'block';
+    }
+
 </script>
 <script src="<%= prod ? 'https://www.paypal.com/sdk/js?client-id=AQ2ASsDCEeLFOyZmHOl11WghAlGbOYXO7XHg0-z_bpEAozuFUmfkLKnREzTI_oqSNdO6YezcsiIFKNVt&currency=USD' : 'https://www.paypal.com/sdk/js?client-id=test&currency=USD' %>"></script>
 <script src="../pp.js"></script>
