@@ -7,12 +7,12 @@
 
     <style>
         body {
-            /* background-color: #e3cdab; */
+            background-color: #e3cdab;
             margin: 0;
             padding: 0;
             font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
-            background-image: url('images/winetasting.png');
-            backdrop-filter: blur(11px);
+            /* background-image: url('images/winetasting.png');
+            backdrop-filter: blur(11px); */
         }
         .header {
             text-align: center;
@@ -23,13 +23,15 @@
             background-color: #81376a;
             color:tan;
             display: flex;
-            justify-content: space-around;
+            justify-content: center;
             align-items: center;
             padding: 10px 20px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             z-index: 1000;
         }
         .header h1 {
+            padding-left: 20px;
+            padding-right: 20px;
             margin: 0;
         }
         .button {
@@ -102,12 +104,10 @@
 .modal-content h2 {
     color: #333;
     margin: 0;
-    font-family: 'Arial', sans-serif;
 }
 
 /* Paragraph Styles */
 .modal-content p {
-    font-family: 'Arial', sans-serif;
     color: #555;
     margin: 10px 0;
 }
@@ -119,70 +119,156 @@
 }
 
 #ticket_message {
-    background: #d7bc98;
+    background: #e5e5e5;
     padding: 6px;
     box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
             border-radius: 10px; 
     font-size: larger;
+    /* border: 3px solid red; */
+    /* animation: bordeRed .5s infinite; */
 }
+
+@keyframes bordeRed {
+    50% {border-color:#f5916b ;}
+}
+
+#tickets{
+    font-weight: bold;
+    color:red;
+    animation: tickLeft .5s infinite;
+}
+
+@keyframes tickLeft {
+    50% {color:#f5916b ; font-weight:bolder;}
+}
+
+.highlight {
+    outline-offset: 5px;
+    outline: 3px solid;
+    outline-color: yellow; /* or any other style you prefer */
+    transition: outline-color 0.3s ease-in-out;
+}
+
     </style>
 
 </head>
 <body>
     <div class="header">
-        <button class="button"onclick="openModal()">Contact Us</button>
+        <button class="button" onclick="openModal()">Contact Us</button>
         <h1>Mekoski Fundraiser</h1>
-        <button class="button" onclick="smoothScroll('paypal-button-container');">Purchase Tickets</button>
+        <button class="button" onclick="focusOn('ticket-form');">Purchase Tickets</button>
     </div>
-    <div class="content">
-        <img src="images/winetasting.png" style="
-        box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-            border-radius: 10px; 
-            display: block; margin-left: auto; margin-right: auto; max-height: 98vh;max-width: 98vw;" alt="Wine Tasting">
-        <p id='ticket_message'>
-            There are only <span style='font-weight: bold;' id="tickets"></span> tickets left!
-        </p>
-
-            <div id="paypal-button-container" style="flex:1;width: 350px;"></div>
-            <p id="result-message"></p>
-
-    </div>
-
+    
+    <!-- Modal for Contact Us -->
     <div id="contactModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Contact Us</h2>
-            <p>Email: <a href="mailto:hgn.shelly@yahoo.com">hgn.shelly@yahoo.com</a></p>
-            <p>Phone: (586) 344-8776</p>
+            <p>Email: <a href="mailto:hgn.shelly@yahoo.com?subject=Terry Mekoski Wine Fundraiser">hgn.shelly@yahoo.com</a></p>
         </div>
     </div>
+
+    <div class="content">
+        <img src="images/winetasting.png" style="
+            box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+            border-radius: 10px; 
+            display: block; 
+            margin-left: auto; 
+            margin-right: auto; 
+            max-height: 98vh;
+            max-width: 98vw;" alt="Wine Tasting">
+        
+        <p id='ticket_message'>
+            There are only <span id="tickets"></span> tickets left!
+        </p>
+    
+        <form id="ticket-form"
+        style="padding-bottom: 10px;">
+            <label for="ticket-count">How many Tickets:</label>
+            <input type="number" id="ticket-count" name="ticket-count" min="1" max="1" required style="width: 40px;" value="1">
+            <div class="button" style='margin-top: 15px;' onclick="openppModal()">Buy</div>
+        </form>
+        <br>
+
+        <div id="pp" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Ticket Amount: <span id="pTix"> </span></h2>
+                <h3>Total Cost: $<span id='cost'></span></h3>
+                <p>Pay Using:</p>
+                <div id="paypal-button-container" >
+                    <!-- style="width: 350px; height: 0; overflow: hidden; transition: height 0.5s;"> -->
+                </div>
+                <p id="result-message"></p>
+            </div>
+        </div>
+        
+    </div>
+    
+    
 <script>
     const tickets=document.getElementById('tickets');
     const ticket_message=document.getElementById('ticket_message');
+    const ticket_count=document.getElementById('ticket-count')
+
+    // Listen for input changes
+    ticket_count.addEventListener('input', function() {
+        const value = parseInt(ticket_count.value);
+
+        // Check if the value is greater than the max
+        if (value > parseInt(ticket_count.max)) {
+            ticket_count.value = ticket_count.max; // Set to max
+        }
+        
+        // Check if the value is less than the min
+        else if (value < parseInt(ticket_count.min)) {
+            ticket_count.value = ticket_count.min; // Set to min
+        }
+    });
+
     loadtickets()
 
-     async function loadtickets() {
+    async function loadtickets() {
     //   reloadCredits.classList.remove('rotated')
     //   void reloadCredits.offsetWidth; 
     //   reloadCredits.classList.add('rotated')
-      tickets.innerText="..."
-      const response = await fetch(location.origin+"/tickets");
-      console.log(response)
-      const res = await response.json().catch((error) => {
-          console.error(error);
+        tickets.innerText="..."
+        const response = await fetch(location.origin+"/tickets");
+        console.log(response)
+        const res = await response.json().catch((error) => {
+            console.error(error);
         });
         console.log(res)
-      if (res !==undefined) {
-        const ticket_amount=27-res
-        if( ticket_amount < 2 ){
-            if (ticket_amount==1){ticket_message.innerText='There is only 1 ticket left!'}
-            else {ticket_message.innerText='Sorry, there are no tickets left!'}
-        }
-        else {tickets.innerText=ticket_amount.toString()}
+        if (res !==undefined) {
+            const ticket_amount=28-res
+            if( ticket_amount < 2 ){
+                if (ticket_amount==1){ticket_message.innerText='There is only 1 ticket left!'}
+                else {ticket_message.innerText='Sorry, there are no tickets left!'}
+            }
+            else {
+                tickets.innerText=ticket_amount.toString()
+                ticket_count.max=ticket_amount
+            }
       }
     //   else {
     //     credits="N/A"; 
     //   }
+    }
+
+    function focusOn(targetId){
+
+        const targetElement = document.getElementById(targetId);
+    
+        // Add highlight class
+        targetElement.classList.add('highlight');
+        
+        // Smooth scroll to the target element
+        smoothScroll(targetId);
+        
+        // Remove highlight class after a short delay
+        setTimeout(() => {
+            targetElement.classList.remove('highlight');
+        }, 500); // Highlight lasts for 2 seconds
     }
 
     function smoothScroll(targetId) {
@@ -190,24 +276,50 @@
             targetElement.scrollIntoView({ behavior: 'smooth' });
         }
 
-        function openModal() {
-            document.getElementById("contactModal").style.display = "block";
-        }
+    function openModal() {
+        document.getElementById("contactModal").style.display = "block";
+    }
 
-        function closeModal() {
-            document.getElementById("contactModal").style.display = "none";
-        }
+    function openppModal() {
+        document.getElementById('pTix').textContent=document.getElementById('ticket-count').value.toString()
+        document.getElementById('cost').textContent=(document.getElementById('ticket-count').value*42).toString()
+        document.getElementById("pp").style.display = "block";
+    }
 
-        // Update the Contact Us button to call openModal()
-        document.querySelector('.header .button').onclick = openModal;
+    function closeModal() {
+        document.getElementById("contactModal").style.display = "none";
+        document.getElementById("pp").style.display = "none";
+        // document.getElementById('paypal-button-container').style.height='0px'
+    }
 
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            const modal = document.getElementById("contactModal");
-            if (event.target === modal) {
-                closeModal();
-            }
+    // Update the Contact Us button to call openModal()
+    document.querySelector('.header .button').onclick = openModal;
+
+    // Close modal when clicking outside of it
+    window.onclick = function(event) {
+        const modal = document.getElementById("contactModal");
+        const ppmodal= document.getElementById("pp");
+        if (event.target === modal || event.target === pp) {
+            closeModal();
         }
+    }
+
+    function showPaypalButton(event) {
+        event.preventDefault(); // Prevent form submission
+        console.log("HELLOWWW")
+        const paypalContainer = document.getElementById('paypal-button-container');
+        const pp=document.getElementById('pp');
+
+        // Set the container height to the measured height
+        paypalContainer.style.height = paypalContainer.firstElementChild.offsetHeight.toString()+"px";
+        pp.style.minHeight=paypalContainer.firstElementChild.offsetHeight.toString()+"px";
+        // Scroll to the paypal container
+        pp.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Optionally, render PayPal buttons here if you're using a PayPal SDK
+        // Example: paypal.Buttons().render('#paypal-button-container');
+
+    }
 </script>
 <script src="<%= prod ? 'https://www.paypal.com/sdk/js?client-id=AQ2ASsDCEeLFOyZmHOl11WghAlGbOYXO7XHg0-z_bpEAozuFUmfkLKnREzTI_oqSNdO6YezcsiIFKNVt&currency=USD' : 'https://www.paypal.com/sdk/js?client-id=test&currency=USD' %>"></script>
 <script src="../pp.js"></script>
