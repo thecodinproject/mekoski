@@ -97,6 +97,27 @@ app.post('/alltix', async (req, res) => {
         res.status(403).send('Forbidden: Incorrect password');
     }
 });
+
+app.post('/addtix',async (req,res) =>{
+    const { password,name,email,phone } = req.body;
+    // Check the password (replace 'your_admin_password' with your actual admin password)
+    if (password === 'Eljoshyo2') {
+        try {
+            const result = await pool.query(
+                `WITH  insert_ticket AS (
+                    INSERT into tickets (name,email,phone,uuid)
+                    SELECT $1,$2,$3,$4)
+                SELECT ticket_number,name,email,phone,paypal as paypal_transaction,created,uuid as purchase_id FROM tickets ORDER BY ticket_number DESC `,
+                [name,email,phone,generateHexCode(12)])
+            res.json(result.rows);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Database error');
+        }
+    } else {
+        res.status(403).send('Forbidden: Incorrect password');
+    }
+})
 ////ROUTES
 
 ////EMAIL
