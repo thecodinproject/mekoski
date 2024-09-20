@@ -35,18 +35,22 @@ app.get('/', (req, res) => {
     res.render('index',{prod:isProduction})
 })
 
-app.get('/tickets', async (req,res) =>{
+app.get('/tickets', async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT count(*) as row_count FROM tickets`
-        )
-        const ticket_count=result.rows[0].row_count
-        return res.send(ticket_count)
+        );
+
+        // Convert row_count to a number
+        const rowCount = parseInt(result.rows[0].row_count, 10) || 0; // Default to 0 if NaN
+        const ticket_count = Math.max(32 - rowCount, 0); // Ensure non-negative
+
+        return res.status(200).json({ ticket_count }); // Send as JSON
     } catch (error) {
         console.error('Error getting ticket count:', error);
         return res.status(500).send('An internal server error occurred.');
     }
-})
+});
 
 app.get('/thanks', (req, res) => {
     const id = req.query.id || null; // Get id from query or set to null
@@ -57,7 +61,7 @@ app.post('/getInfo', async (req, res) => {
     const uuid = req.body.uuid; // Access the UUID from the request body
     try {
         const result = await pool.query(
-            `SELECT name, email, phone FROM tickets WHERE uuid = $1`, [uuid]
+            `SELECT name, ticket_number FROM tickets WHERE uuid = $1`, [uuid]
         );
         
         if (result.rows.length > 0) {
@@ -68,6 +72,28 @@ app.post('/getInfo', async (req, res) => {
     } catch (error) {
         console.error('Error getting ticket information:', error);
         return res.status(500).send('An internal server error occurred.');
+    }
+});
+
+app.get('/admin', (req,res) => {
+    res.render('admin');
+})
+
+app.post('/alltix', async (req, res) => {
+    const { password } = req.body;
+
+    // Check the password (replace 'your_admin_password' with your actual admin password)
+    if (password === 'Eljoshyo2') {
+        try {
+            const result = await pool.query(
+                'SELECT ticket_number,name,email,phone,paypal as paypal_transaction,created,uuid as purchase_id FROM tickets');
+            res.json(result.rows);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Database error');
+        }
+    } else {
+        res.status(403).send('Forbidden: Incorrect password');
     }
 });
 ////ROUTES
@@ -118,6 +144,31 @@ async function sendEmail(email,subject,message) {
     }
 }
 ////EMAIL
+
+function rowsToTable(rows) {
+    if (rows.length === 0) return "<p>No purchase information available.</p>";
+
+    let table = `<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">`;
+    table += `<thead><tr>`;
+    // Get keys from the first row for headers
+    const keys = Object.keys(rows[0]);
+    keys.forEach(key => {
+        table += `<th style="border: 1px solid #dddddd; padding: 8px; text-align: left;">${key}</th>`;
+    });
+    table += `</tr></thead><tbody>`;
+    
+    // Add each row to the table
+    rows.forEach(row => {
+        table += `<tr>`;
+        keys.forEach(key => {
+            table += `<td style="border: 1px solid #dddddd; padding: 8px;">${row[key]}</td>`;
+        });
+        table += `</tr>`;
+    });
+    table += `</tbody></table>`;
+    return table;
+}
+
 
 /////PAYPAL SHIATSU
 const base = isProduction ? "https://api-m.paypal.com" : "https://api-m.sandbox.paypal.com"; 
@@ -356,9 +407,10 @@ app.post("/api/orders/:orderID/capture", async (req, res) => {
                 }
                 if (result?.rows?.length) {
                     ({ id: purchaseID, quantity: quant, cost:cost, phone :phone,email:email,uuid=uuid } = result.rows[0]);
+                    email=result.rows[0].email
                 }
+                console.log('email',email,result.rows[0])
         })
-        console.log('email',email)
         const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
         jsonResponse.quantity=quant; jsonResponse.cost=cost; jsonResponse.purchaseID=purchaseID; jsonResponse.uuid=uuid
         const trans_id=jsonResponse.purchase_units[0].payments.captures[0].id
@@ -379,7 +431,8 @@ app.post("/api/orders/:orderID/capture", async (req, res) => {
                 RETURNING uuid
             )
             INSERT INTO tickets (name,email,phone,uuid, paypal)
-            SELECT name,email,phone,temp_tickets.uuid, $1 FROM temp_tickets,update_purchase WHERE temp_tickets.uuid = update_purchase.uuid `,
+            SELECT name,email,phone,temp_tickets.uuid, $1 FROM temp_tickets,update_purchase WHERE temp_tickets.uuid = update_purchase.uuid 
+            RETURNING name,ticked_number`,
             [trans_id],
             (error,results) => {
                 if (error || !(results?.rows?.length)){
@@ -392,9 +445,18 @@ app.post("/api/orders/:orderID/capture", async (req, res) => {
                 }
                 else {//add credit to jsonResponse, send discord for new purchase, send email, update session, and send back to pp.js
                     res.status(httpStatusCode).json(jsonResponse);
-                    sendEmail(email,`Mekoski Wine Tasking Fundraiser`,`Thank you for supporting Terence Mekoski! <br>
+
+                    // Format results.rows into an HTML table
+                    const purchaseInfoTable = rowsToTable(results.rows);
+
+                    sendEmail(email,`Mekoski Wine Tasking Fundraiser`,`Thank you for supporting Terence Mekoski for Macomb County Sheriff! <br>
                         Here is your event purchase info:<br>
-                        ${results.rows}
+                        ${purchaseInfoTable}<br>
+                        We hope you have a good time at the fundraiser and enjoy the wines! <br>
+                        See you on October 17, Thursday at 6:30pm.<br>
+                        Filipo Marc Winery <br>
+                        39085 Garfield Rd<br>
+                        Clinton Twp, MI 48038
                         `) }
         })
     } catch (error) {

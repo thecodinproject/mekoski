@@ -1,13 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="style.css" type="text/css" />
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404</title>
 </head>
 <body>
-    <div>
-        GET OUT OF HERE!
+    <div class="header">
+        <button class="button" onclick="openModal()">Contact Us</button>
+        <h1>Mekoski Fundraiser</h1>
+        <button class="button" onclick="window.location.href='/';">Home</button>
+    </div>
+
+    <!-- Modal for Contact Us -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span tabindex="0" class="close" onclick="closeModal()">&times;</span>
+            <h2>Contact Us</h2>
+            <p>Email: <a href="mailto:hgn.shelly@yahoo.com?subject=Terry Mekoski Wine Fundraiser">hgn.shelly@yahoo.com</a></p>
+        </div>
+    </div>
+
+    <div class="content">
+        Hey! You're not supposed to be here!
     </div>
 </body>
 </html>

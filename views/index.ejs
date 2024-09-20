@@ -120,31 +120,38 @@
     loadtickets()
 
     async function loadtickets() {
-    //   reloadCredits.classList.remove('rotated')
-    //   void reloadCredits.offsetWidth; 
-    //   reloadCredits.classList.add('rotated')
-        tickets.innerText="..."
-        const response = await fetch(location.origin+"/tickets");
-        console.log(response)
-        const res = await response.json().catch((error) => {
-            console.error(error);
-        });
-        console.log(res)
-        if (res !==undefined) {
-            const ticket_amount=28-res
+    tickets.innerText = "..."; // Show loading state
+
+    try {
+        const response = await fetch(location.origin + "/tickets");
+        console.log(response);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const res = await response.json();
+        console.log(res);
+
+        if (res && res.ticket_count !== undefined) {
+            const ticket_amount = res.ticket_count;
+
             if( ticket_amount < 2 ){
                 if (ticket_amount==1){ticket_message.innerText='There is only 1 ticket left!'}
-                else {ticket_message.innerText='Sorry, there are no tickets left!'}
+                else {
+                    ticket_message.innerText='Sorry, there are no tickets left!';
+                    document.getElementById('bbutt').remove();
+                }
+            } else {
+                tickets.innerText = ticket_amount.toString();
+                ticket_count.max = ticket_amount; // Set max amount of tickets
             }
-            else {
-                tickets.innerText=ticket_amount.toString()
-                ticket_count.max=Math.min(ticket_amount,ticket_amount)//max amount of tickets at a time??
-            }
-      }
-    //   else {
-    //     credits="N/A"; 
-    //   }
+        }
+    } catch (error) {
+        console.error('Error loading tickets:', error);
+        ticket_message.innerText = 'Error loading tickets. Please try again later.';
     }
+}
 
     function focusOn(targetId){
         if (lastId==targetId){return}

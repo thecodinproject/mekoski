@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+</head>
+<body>
+    <h1>Enter Admin Password</h1>
+    <form id="passwordForm">
+        <input type="password" id="adminPassword" required>
+        <button class='button' type="submit">Get Ticket Data</button>
+    </form>
+    <div id="result"></div>
+    <script>
+        document.getElementById('passwordForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    
+    const password = document.getElementById('adminPassword').value;
+
+    try {
+        const response = await fetch('/alltix', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password }),
+        });
+
+        if (response.ok) {
+            const tickets = await response.json();
+            displayTickets(tickets);
+        } else {
+            const message = await response.text();
+            alert(message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again later.');
+    }
+});
+
+function displayTickets(tickets) {
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = ''; // Clear previous results
+
+    if (tickets.length === 0) {
+        resultDiv.innerHTML = '<p>No tickets found.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.border = '1';
+    
+    // Create table header
+    const header = table.createTHead();
+    const headerRow = header.insertRow(0);
+    Object.keys(tickets[0]).forEach(key => {
+        const cell = headerRow.insertCell();
+        cell.textContent = key;
+    });
+
+    // Create table body
+    const tbody = table.createTBody();
+    tickets.forEach(ticket => {
+        const row = tbody.insertRow();
+        Object.values(ticket).forEach(value => {
+            const cell = row.insertCell();
+            cell.textContent = value;
+        });
+    });
+
+    resultDiv.appendChild(table);
+}
+    </script>
+</body>
+</html>
