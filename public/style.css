@@ -152,7 +152,7 @@ animation: tickLeft .5s infinite;
 }
 
 @keyframes tickLeft {
-50% {color:#f5916b ; font-weight:bolder;}
+50% {color:#ff6d35 ; font-weight:bolder;}
 }
 
 .highlight {
