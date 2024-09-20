@@ -3,6 +3,13 @@ window.paypal
     async createOrder() {
       const container = document.querySelector("#result-message");
       container.innerHTML = '';
+      let attendeeNames=[]
+      for (let i = 1; i <= ticket_count.value; i++) {
+        attendeeNames.push(document.getElementById(`attendee-name${i}`).value)
+      }
+      const quant=attendeeNames.length
+      const phone = document.getElementById('phone-number').value;
+      const email = document.getElementById('email').value;
       try {
         const response = await fetch("/api/orders", {
           method: "POST",
@@ -14,9 +21,9 @@ window.paypal
           body: JSON.stringify({
             product:
               {
-                description: "Mekoski Wine Tasking Event Ticket",
-                quantity: 1
-              },
+                description: {attendeeNames,phone,email},
+                quantity: quant,
+              }
           }),
         });
         
@@ -68,11 +75,9 @@ window.paypal
           throw new Error(JSON.stringify(orderData));
         } else {
           // (3) Successful transaction -> Show confirmation or thank you message
-          // Or go to another URL:  actions.redirect('thank_you.html');
-          const transaction =
-            orderData?.purchase_units?.[0]?.payments?.captures?.[0] ||
-            orderData?.purchase_units?.[0]?.payments?.authorizations?.[0];
-          resultMessage(orderData,true,orderData.credit)
+          // Or go to another URL:  
+          actions.redirect('thanks?apple.html');
+          // resultMessage(orderData,true,orderData.credit)
           // console.log(
           //   "Capture PP result",
           //   orderData,
