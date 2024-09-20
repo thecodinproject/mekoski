@@ -76,7 +76,9 @@ window.paypal
         } else {
           // (3) Successful transaction -> Show confirmation or thank you message
           // Or go to another URL:  
-          actions.redirect('thanks?apple.html');
+          // actions.redirect('thanks?apple.html');
+          const uuid=orderData.uuid
+          window.location.href = `/thanks?id=${uuid}`
           // resultMessage(orderData,true,orderData.credit)
           // console.log(
           //   "Capture PP result",

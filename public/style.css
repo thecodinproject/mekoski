@@ -1,0 +1,188 @@
+body {
+    background-color: #e3cdab;
+    margin: 0;
+    padding: 0;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    /* background-image: url('images/winetasting.png');
+    backdrop-filter: blur(11px); */
+}
+
+table {
+    width: 100%;
+    max-width: 1000px;
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid #868686;
+    padding: 8px;
+    text-align: left;
+}
+th {
+    background-color: #81376a;
+    color:tan
+}
+
+.header {
+    text-align: center;
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #81376a;
+    color:tan;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+.header h1 {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin: 0;
+}
+.button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    padding: 10px 20px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+}
+.button:hover {
+    background-color: #45a049;
+}
+.content {
+    margin-top: 20px; /* To avoid content being hidden behind the header */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Modal Styles */
+.modal {
+display: none; /* Hidden by default */
+position: fixed; /* Stay in place */
+z-index: 9999; /* Sit on top */
+left: 0;
+top: 0;
+width: 100%; /* Full width */
+height: 100%; /* Full height */
+overflow: auto; /* Enable scroll if needed */
+background-color: rgba(0, 0, 0, 0.7); /* Dark overlay */
+}
+
+.modal-content {
+text-align: center;
+background-color: #ffffff;
+padding: 20px;
+border-radius: 8px; /* Rounded corners */
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
+width: 90%; /* Responsive width */
+max-width: 500px; /* Maximum width */
+max-height: 80vh; /* Maximum height of modal content */
+overflow-y: auto; /* Enable vertical scrolling */
+position: absolute; /* Changed to absolute positioning */
+top: 50%; /* Center vertically */
+left: 50%; /* Center horizontally */
+transform: translate(-50%, -50%); /* Adjust position to be centered */
+animation: fadeIn 0.3s; /* Fade-in animation */
+}
+
+/* Close button */
+.close {
+color: #888;
+float: right;
+font-size: 28px;
+font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+color: #d9534f; /* Red color on hover */
+text-decoration: none;
+cursor: pointer;
+}
+
+/* Title Styles */
+.modal-content h2 {
+color: #333;
+margin: 0;
+}
+
+/* Paragraph Styles */
+.modal-content p {
+color: #555;
+margin: 10px 0;
+}
+
+/* Animation */
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+#ticket_message {
+background: #e5e5e5;
+padding: 6px;
+box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+    border-radius: 10px; 
+font-size: larger;
+/* border: 3px solid red; */
+/* animation: bordeRed .5s infinite; */
+}
+
+@keyframes bordeRed {
+50% {border-color:#f5916b ;}
+}
+
+#tickets{
+font-weight: bold;
+color:red;
+animation: tickLeft .5s infinite;
+}
+
+@keyframes tickLeft {
+50% {color:#f5916b ; font-weight:bolder;}
+}
+
+.highlight {
+border-radius: 5px;
+outline-offset: 5px;
+outline: 3px solid transparent; 
+
+animation: rwb 1.5s forwards, fadeToTransparent 1s 1.5s forwards; /* Chain animations */
+}
+
+@keyframes rwb {
+0% {
+outline-color: transparent; /* Start with transparent */
+}
+25% {
+outline-color: red; /* Change to red */
+}
+50% {
+outline-color: white; /* Change to white */
+}
+75% {
+outline-color: white; /* Hold white longer */
+}
+100% {
+outline-color: blue; /* Change to blue */
+}
+}
+
+@keyframes fadeToTransparent {
+0% {
+outline-color: blue; /* Start from blue */
+}
+100% {
+outline-color: transparent; /* Fade to transparent */
+}
+}

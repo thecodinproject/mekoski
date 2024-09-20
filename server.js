@@ -48,10 +48,28 @@ app.get('/tickets', async (req,res) =>{
     }
 })
 
-app.get('/thanks', (req,res) => {
-    req.query.id
-    res.render('thanks')
-})
+app.get('/thanks', (req, res) => {
+    const id = req.query.id || null; // Get id from query or set to null
+    res.render('thanks', { id }); // Pass id to EJS template
+});
+
+app.post('/getInfo', async (req, res) => {
+    const uuid = req.body.uuid; // Access the UUID from the request body
+    try {
+        const result = await pool.query(
+            `SELECT name, email, phone FROM tickets WHERE uuid = $1`, [uuid]
+        );
+        
+        if (result.rows.length > 0) {
+            return res.json(result.rows); // Respond with the rows as JSON
+        } else {
+            return res.status(404).send('No tickets found for this ID.');
+        }
+    } catch (error) {
+        console.error('Error getting ticket information:', error);
+        return res.status(500).send('An internal server error occurred.');
+    }
+});
 ////ROUTES
 
 ////EMAIL
@@ -173,7 +191,7 @@ const generateAccessToken = async () => {
                 WITH insert_tix AS (
                     ${tempTicketsQuery}
                 )
-                INSERT INTO purchases (uuid, quantity, cost, email, phone)
+                INSERT INTO purchases (uuid, quantity, cost, phone, email)
                 SELECT $1, $2, $3::numeric, $4, $5
                 RETURNING id
             `;
