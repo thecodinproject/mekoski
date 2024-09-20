@@ -59,7 +59,7 @@
         
                 <!-- Second Page -->
                 <div id="second-page" style="display: none;">
-                    <button  class="button" onclick="showFirstPage()">Back</button>
+                    <button  class="button" onclick="showFirstPage()">&lt;- Go Back</button>
                     <h2>Ticket Amount: <span id="pTix2"> </span></h2>
                     <h3>Total Cost: $<span id='cost2'></span></h3>
                     <p>Pay Using:</p>
@@ -181,6 +181,7 @@
     }
 
     function openppModal() {
+        showFirstPage()
         const ticketCount = document.getElementById('ticket-count').value;
         document.getElementById('pTix').textContent = ticketCount.toString();
         document.getElementById('cost').textContent = (ticketCount * 42).toString();
@@ -273,7 +274,6 @@
 
     function showPaypalButton(event) {
         event.preventDefault(); // Prevent form submission
-        console.log("HELLOWWW")
         const paypalContainer = document.getElementById('paypal-button-container');
         const pp=document.getElementById('pp');
 
@@ -292,7 +292,8 @@
     function showPaymentPage() {
         document.getElementById('first-page').style.display = 'none';
         document.getElementById('second-page').style.display = 'block';
-    }
+        document.getElementById('result-message').innerText=''
+    }   
 
     function showFirstPage() {
         document.getElementById('second-page').style.display = 'none';

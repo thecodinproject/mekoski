@@ -99,16 +99,6 @@ window.paypal
 // Example function to show a result to the user. Your site's UI library can be used instead.
 function resultMessage(message,success=false,db=true) {
   if (success){
-    const pricing=document.getElementById('pricing'); pricing.style.lineHeight='30px'
-    if (!db){
-      pricing.innerHTML=`We have received your payment.<br>This purchase is currently<span style='color:red;font-size:larger;'> Pending</span>, 
-      and will be processed within the next few hours. <br>You will receive an email when it has been completed!<br>
-      Purchase #: ${message.purchaseID}<br>Credits: ${message.quantity}<br> Cost: $${message.cost}`
-    } else {
-      pricing.innerHTML=`Purchase ID: ${message.purchaseID}<br>Credits: ${message.quantity}<br> Cost: $${message.cost}
-      <br> Thank You for your purchase!<br>You now have ${message.credit} credits!<br> The purchase details have also been sent to your email.
-      <br>Please go to <a href='/dashboard'>Your Dashboard</a> to create an order!`}
-      document.getElementById('nav-credits').textContent=message.credit.toString()
   }
   else{
     const container = document.querySelector("#result-message");

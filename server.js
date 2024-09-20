@@ -5,6 +5,7 @@ const {escapeLiteral} =require('pg');
 const MailChecker=require('mailchecker')
 const nodemailer = require("nodemailer");
 const crypto = require('crypto');
+const { count } = require('console');
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -220,6 +221,10 @@ const generateAccessToken = async () => {
 
     return new Promise(async (resolve, reject) => {
         try {
+            const names = !data.attendeeNames.some(name => name.trim() === "");
+            if (!data.email || !data.phone || !names) {return reject(new Error("Please enter all info: Name(s), number, email"))}
+            else if (!(!data.attendeeNames.some(name => name.length < 2))){return reject(new Error("Name(s) must be at least 2 characters long"))}
+            else if (data.attendeeNames.some(name => /\d/.test(name))){return reject(new Error("Invalid names(s). Numbers are not Allowed."))}
             // Initialize order in purchases table
             const uuid = generateHexCode(12);
             const attendeeNames = data.attendeeNames; // assuming this is an array
@@ -247,8 +252,54 @@ const generateAccessToken = async () => {
                 RETURNING id
             `;
 
+
+            function convertTo10DigitNumber(phoneNumber) {
+                // Remove non-digit characters
+                let cleanedNumber = phoneNumber.replace(/[^0-9]/g, '');
+            
+                // Remove leading '1' if present
+                if (cleanedNumber.startsWith('1')) {
+                    cleanedNumber = cleanedNumber.slice(1);
+                }
+            
+                // Check if it is exactly 10 digits
+                if (cleanedNumber.length === 10) {
+                    return cleanedNumber;
+                } else {
+                    throw new Error('Input must contain exactly 10 digits after cleaning.');
+                }
+            }
+
+            function isValidEmail(email) {
+                // Regular expression for validating an email address
+                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+                // Check if the email matches the pattern
+                if (!emailPattern.test(email)) {
+                    throw new Error('Invalid email format.');
+                }
+                return true; // Return true if valid
+            }
+
+            let number
+            try {
+                number = convertTo10DigitNumber(data.phone);
+            } catch (error) {
+                return reject(new Error("Invalid phone number."));
+            }
+
+
+            try {
+                isValidEmail(data.email);
+            } catch (error) {
+                return reject(new Error("Invalid email."));
+            }
+
+
             // Prepare the values array
-            const values = [uuid, quant, cost, data.phone, data.email];
+            const values = [uuid, quant, cost, number, data.email];
+
+
             attendeeNames.forEach(name => {
                 values.push(name);
             });
@@ -256,17 +307,40 @@ const generateAccessToken = async () => {
             // // Log final values for debugging
             // console.log("Final query:", query);
             // console.log("Final values array:", values);
-
-            // Execute the query
+            
             const { rows } = await pool.query(query, values);
 
             
             if (!rows || !rows.length) {
-                reject(new Error("Unable to access ticket database at this time."));
-                return;
+                return reject(new Error("Unable to access ticket database at this time."));
             }
             
             const id = rows[0].id;
+
+            ////Check if tickets available!!
+            await pool.query(
+                `
+                WITH ticket_count AS (
+                    SELECT COUNT(*) AS count FROM temp_tickets WHERE uuid = $1
+                ),
+                existing_ticket_count AS (
+                    SELECT COUNT(*) AS count FROM tickets
+                )
+                SELECT 
+                    (SELECT count FROM ticket_count) + (SELECT count FROM existing_ticket_count) AS total_count
+                `,
+                [uuid],
+                (error, countResults) => {
+                    if (error) {
+                        console.error('Error counting tickets', error);
+                        return reject(new Error('An internal server error occurred.'));
+                    }
+                    const totalCount = countResults?.rows[0]?.total_count || 0;
+                    if (totalCount > 32) {
+                        return reject(new Error('There are not enough tickets available! Please lower the amount or contact us.') );
+                    }
+                }
+            )
             
             // Generate access token
             const accessToken = await generateAccessToken();
@@ -389,79 +463,111 @@ app.post("/api/orders", async (req, res) => {
         // //console.log("apiCreated",jsonResponse)
         res.status(httpStatusCode).json(jsonResponse);
     } catch (err) {
-        console.error("Failed to create paypal order (/api/orders):", err);
+        // console.error("Failed to create paypal order (/api/orders):", err);
         res.status(500).json({ error: err.message });
     }
   });
     
-app.post("/api/orders/:orderID/capture", async (req, res) => {
+  app.post("/api/orders/:orderID/capture", async (req, res) => {
     try {
-        const { orderID } = req.params; let purchaseID,quant,cost,phone,email,uuid
-        pool.query(/////Update order to ACCEPTED
-            `UPDATE purchases SET status=2 WHERE temp_id=$1 RETURNING id,quantity,cost,email,phone,uuid`,
-            [orderID],
-            (err,result) => {
-                if (err){
-                    console.error('Error executing paypal temp status 2 query', orderID, err);
-                  return res.status(500).send('An internal server error occurred.');
-                }
-                if (result?.rows?.length) {
-                    ({ id: purchaseID, quantity: quant, cost:cost, phone :phone,email:email,uuid=uuid } = result.rows[0]);
-                    email=result.rows[0].email
-                }
-                console.log('email',email,result.rows[0])
-        })
-        const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
-        jsonResponse.quantity=quant; jsonResponse.cost=cost; jsonResponse.purchaseID=purchaseID; jsonResponse.uuid=uuid
-        const trans_id=jsonResponse.purchase_units[0].payments.captures[0].id
+        const { orderID } = req.params;
 
-        if (httpStatusCode >=400){// Check if HTTP Status Code indicates success
-            const errorMessage = jsonResponse.details && jsonResponse.details[0] 
-                ? jsonResponse.details[0].description 
-                : jsonResponse.message || 'An error occurred while processing your request.';
-            return res.status(httpStatusCode).json({ error: errorMessage });
+        // Update order to ACCEPTED and get the result
+        const result = await pool.query(
+            `UPDATE purchases SET status=2 WHERE temp_id=$1 RETURNING id, quantity, cost, email, phone, uuid`,
+            [orderID]
+        );
+
+        if (result?.rows?.length) {
+            // const { id: purchaseID, quantity: quant, cost, phone, email, uuid } = result.rows[0];
+            const purchaseID=result.rows[0].id;
+            const quant=result.rows[0].id;
+            const cost=result.rows[0].cost;
+            const email=result.rows[0].email;
+            const uuid=result.rows[0].uuid
+
+            // Check if tickets are available
+            const countResults = await pool.query(
+                `
+                WITH ticket_count AS (
+                    SELECT COUNT(*) AS count FROM temp_tickets WHERE uuid = $1
+                ),
+                existing_ticket_count AS (
+                    SELECT COUNT(*) AS count FROM tickets
+                )
+                SELECT 
+                    (SELECT count FROM ticket_count) + (SELECT count FROM existing_ticket_count) AS total_count
+                `,
+                [uuid]
+            );
+
+            const totalCount = countResults?.rows[0]?.total_count || 0;
+            if (totalCount > 32) {
+                return res.status(400).json({ error: 'There are not enough tickets available! Please lower the amount or contact us.' });
+            }
+
+            const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
+            jsonResponse.quantity = quant; 
+            jsonResponse.cost = cost; 
+            jsonResponse.purchaseID = purchaseID; 
+            jsonResponse.uuid = uuid;
+            const trans_id = jsonResponse.purchase_units[0].payments.captures[0].id;
+
+            if (httpStatusCode >= 400) {
+                const errorMessage = jsonResponse.details?.[0]?.description || jsonResponse.message || 'An error occurred while processing your request.';
+                return res.status(httpStatusCode).json({ error: errorMessage });
+            }
+
+            // Update order to CAPTURED, add trans_id to order, and add tickets
+            const finalResults = await pool.query(
+                `
+                WITH update_purchase AS (
+                    UPDATE purchases
+                    SET status = 3, trans_id = $1
+                    WHERE temp_id = $2 
+                    RETURNING uuid
+                )
+                INSERT INTO tickets (name, email, phone, uuid, paypal)
+                SELECT name, email, phone, temp_tickets.uuid, $3 
+                FROM temp_tickets, update_purchase 
+                WHERE temp_tickets.uuid = update_purchase.uuid 
+                RETURNING name, ticket_number
+                `,
+                [trans_id, orderID, trans_id]
+            );
+
+            if (finalResults?.rows.length === 0) {
+                console.error('Error executing paypal final trans query', uuid);
+                await sendEmail(email, `Mekoski Wine Tasking Fundraiser-Purchase ${uuid} is Pending`,
+                    `We have received your Payment for Purchase ${uuid}.
+                    <br>It is currently pending and will be processed within the next few hours.<br>
+                    <br>You will receive an email when it has been processed!`
+                );
+                return; // Stop further execution
+            } else {
+                // Send success response
+                res.status(httpStatusCode).json(jsonResponse);
+                
+                // Format results.rows into an HTML table
+                const purchaseInfoTable = rowsToTable(finalResults.rows);
+
+                await sendEmail(email, `Mekoski Wine Tasking Fundraiser`, `Thank you for supporting Terence Mekoski for Macomb County Sheriff! <br>
+                    Here is your event purchase info:<br>
+                    ${purchaseInfoTable}<br>
+                    We hope you have a good time at the fundraiser and enjoy the wines! <br>
+                    See you on October 17, Thursday at 6:30pm.<br>
+                    Filipo Marc Winery <br>
+                    39085 Garfield Rd<br>
+                    Clinton Twp, MI 48038
+                    `);
+                return; // Ensure no further responses are sent
+            }
+        } else {
+            return res.status(404).send('Order not found.');
         }
-
-        pool.query(/////Update order to CAPTURED, add trans_id to order, and add credits to user
-            `
-            WITH update_purchase AS (--update paypal transaction and get user_id
-                UPDATE purchases
-                SET status = 3, trans_id = ${escapeLiteral(trans_id)}
-                WHERE temp_id = ${escapeLiteral(orderID)} 
-                RETURNING uuid
-            )
-            INSERT INTO tickets (name,email,phone,uuid, paypal)
-            SELECT name,email,phone,temp_tickets.uuid, $1 FROM temp_tickets,update_purchase WHERE temp_tickets.uuid = update_purchase.uuid 
-            RETURNING name,ticked_number`,
-            [trans_id],
-            (error,results) => {
-                if (error || !(results?.rows?.length)){
-                    res.status(httpStatusCode).json(jsonResponse);
-                    console.error('Error executing paypal final trans query',uuid,error)
-                    sendEmail(email,`Mekoski Wine Tasking Fundraiser-Purchase ${uuid} is Pending`,
-                        `We have recieved your Payment for Purchase ${uuid}.
-                        <br>It is currently pending, and will be processed within the next few hours.<br>
-                        <br>You will receive an email when it has been processed!`)
-                }
-                else {//add credit to jsonResponse, send discord for new purchase, send email, update session, and send back to pp.js
-                    res.status(httpStatusCode).json(jsonResponse);
-
-                    // Format results.rows into an HTML table
-                    const purchaseInfoTable = rowsToTable(results.rows);
-
-                    sendEmail(email,`Mekoski Wine Tasking Fundraiser`,`Thank you for supporting Terence Mekoski for Macomb County Sheriff! <br>
-                        Here is your event purchase info:<br>
-                        ${purchaseInfoTable}<br>
-                        We hope you have a good time at the fundraiser and enjoy the wines! <br>
-                        See you on October 17, Thursday at 6:30pm.<br>
-                        Filipo Marc Winery <br>
-                        39085 Garfield Rd<br>
-                        Clinton Twp, MI 48038
-                        `) }
-        })
     } catch (error) {
         console.error("Failed to create paypal order (/api/orders/:orderID/capture):", error);
-        res.status(500).json({ error: error });
+        return res.status(500).json({ error: error });
     }
 });
 /////PAYPAL SHIATSU

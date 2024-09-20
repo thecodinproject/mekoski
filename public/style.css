@@ -116,7 +116,7 @@ cursor: pointer;
 /* Title Styles */
 .modal-content h2 {
 color: #333;
-margin: 0;
+/* margin: 0; */
 }
 
 /* Paragraph Styles */
