@@ -145,13 +145,41 @@
 }
 
 .highlight {
+    border-radius: 5px;
     outline-offset: 5px;
-    outline: 3px solid;
-    outline-color: yellow; /* or any other style you prefer */
-    transition: outline-color 0.3s ease-in-out;
+    outline: 3px solid transparent; 
+    
+    animation: rwb 1.5s forwards, fadeToTransparent 1s 1.5s forwards; /* Chain animations */
 }
 
-    </style>
+@keyframes rwb {
+    0% {
+        outline-color: transparent; /* Start with transparent */
+    }
+    25% {
+        outline-color: red; /* Change to red */
+    }
+    50% {
+        outline-color: white; /* Change to white */
+    }
+    75% {
+        outline-color: white; /* Hold white longer */
+    }
+    100% {
+        outline-color: blue; /* Change to blue */
+    }
+}
+
+@keyframes fadeToTransparent {
+    0% {
+        outline-color: blue; /* Start from blue */
+    }
+    100% {
+        outline-color: transparent; /* Fade to transparent */
+    }
+}
+
+</style>
 
 </head>
 <body>
@@ -226,7 +254,7 @@
     const tickets=document.getElementById('tickets');
     const ticket_message=document.getElementById('ticket_message');
     const ticket_count=document.getElementById('ticket-count')
-    let current_ticket_count=0;
+    let current_ticket_count=0; let lastId
 
     document.getElementById('bbutt').addEventListener('keyup', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -295,7 +323,8 @@
     }
 
     function focusOn(targetId){
-
+        if (lastId==targetId){return}
+        lastId=targetId
         const targetElement = document.getElementById(targetId);
     
         // Add highlight class
@@ -307,7 +336,8 @@
         // Remove highlight class after a short delay
         setTimeout(() => {
             targetElement.classList.remove('highlight');
-        }, 500); // Highlight lasts for 2 seconds
+            lastId=null
+        }, 2500); // Highlight lasts for 2 seconds
     }
 
     function smoothScroll(targetId) {
