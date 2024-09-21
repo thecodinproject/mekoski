@@ -32,19 +32,34 @@
         
         <h2>Add Ticket</h2>
         <form id="addTicketForm">
-            <label for="name">Name</label>
-            <input type="text" id="name" required placeholder="Name">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" required placeholder="Name">
+            </div>
+        
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required placeholder="Email">
+            </div>
+        
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="tel" id="phone" required placeholder="Phone">
+            </div>
+        
+            <div class="form-group">
+                <label for="method">Payment Method</label>
+                <input type="text" id="method" required placeholder="Cash, Check, etc.">
+            </div>
+        
+            <div class="form-group">
+                <label for="ticketPassword">Password</label>
+                <input type="password" id="ticketPassword" required placeholder="Admin Password">
+            </div>
+            <div class="admin_button">
+                <button class='button' type="submit">Add Ticket</button>
+            </div>
             
-            <label for="email">Email</label>
-            <input type="email" id="email" required placeholder="Email">
-            
-            <label for="phone">Phone</label>
-            <input type="tel" id="phone" required placeholder="Phone">
-            
-            <label for="ticketPassword">Password</label>
-            <input type="password" id="ticketPassword" required placeholder="Admin Password">
-            
-            <button class='button' type="submit">Add Ticket</button>
         </form>
 
         <div id="result"></div>
@@ -80,6 +95,7 @@
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const phone = document.getElementById('phone').value;
+            const method = document.getElementById('method').value;
             const password = document.getElementById('ticketPassword').value;
 
             try {

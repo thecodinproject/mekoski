@@ -8,6 +8,30 @@ body {
     backdrop-filter: blur(11px); */
 }
 
+#addTicketForm {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping of items */
+    gap: 1em; /* Space between items */
+}
+
+.form-group {
+    display: flex;
+    align-items: center; /* Center vertically */
+    min-width: 250px; /* Minimum width for each pair (adjust as needed) */
+    flex: 1; /* Allow to grow and shrink */
+}
+
+.form-group label {
+    margin-right: 0.5em; /* Space between label and input */
+}
+
+.admin_button {
+    flex-basis: 100%; /* Button takes full width on its own line */
+}
+
+#result{
+    margin:auto;
+}
 table {
     width: 100%;
     max-width: 1000px;

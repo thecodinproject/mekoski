@@ -87,7 +87,7 @@ app.post('/alltix', async (req, res) => {
     if (password === 'Eljoshyo2') {
         try {
             const result = await pool.query(
-                'SELECT ticket_number,name,email,phone,paypal as paypal_transaction,created,uuid as purchase_id FROM tickets');
+                'SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets');
             res.json(result.rows);
         } catch (err) {
             console.error(err);
@@ -99,16 +99,17 @@ app.post('/alltix', async (req, res) => {
 });
 
 app.post('/addtix',async (req,res) =>{
-    const { password,name,email,phone } = req.body;
+    const { password,name,email,phone,method } = req.body;
     // Check the password (replace 'your_admin_password' with your actual admin password)
     if (password === 'Eljoshyo2') {
         try {
             const result = await pool.query(
                 `WITH  insert_ticket AS (
-                    INSERT into tickets (name,email,phone,uuid)
-                    SELECT $1,$2,$3,$4)
-                SELECT ticket_number,name,email,phone,paypal as paypal_transaction,created,uuid as purchase_id FROM tickets ORDER BY ticket_number DESC `,
-                [name,email,phone,generateHexCode(12)])
+                    INSERT into tickets (name,email,phone,uuid,method)
+                    SELECT $1,$2,$3,$4,$5)
+                    SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets 
+                ORDER BY ticket_number DESC `,
+                [name,email,phone,generateHexCode(12)],method)
             res.json(result.rows);
         } catch (err) {
             console.error(err);
@@ -571,13 +572,13 @@ app.post("/api/orders", async (req, res) => {
                     WHERE temp_id = $2 
                     RETURNING uuid
                 )
-                INSERT INTO tickets (name, email, phone, uuid, paypal)
-                SELECT name, email, phone, temp_tickets.uuid, $3 
+                INSERT INTO tickets (name, email, phone, uuid, paypal,method)
+                SELECT name, email, phone, temp_tickets.uuid, $3, $4
                 FROM temp_tickets, update_purchase 
                 WHERE temp_tickets.uuid = update_purchase.uuid 
                 RETURNING name, ticket_number
                 `,
-                [trans_id, orderID, trans_id]
+                [trans_id, orderID, trans_id,'paypal']
             );
 
             if (finalResults?.rows.length === 0) {
