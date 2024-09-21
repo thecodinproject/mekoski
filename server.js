@@ -118,6 +118,27 @@ app.post('/addtix',async (req,res) =>{
         res.status(403).send('Forbidden: Incorrect password');
     }
 })
+
+app.post('/removetix',async (req,res) =>{
+    const { password,ticket_number } = req.body;
+    // Check the password (replace 'your_admin_password' with your actual admin password)
+    if (password === 'Eljoshyo2') {
+        try {
+            const result = await pool.query(
+                `WITH  delete_ticket AS (
+                DELETE from tickets WHERE ticket_number=$1)
+                SELECT ticket_number,name,email,phone,paypal as paypal_transaction,created,uuid as purchase_id FROM tickets ORDER BY ticket_number ASC `,
+                [ticket_number])
+            res.json(result.rows);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Database error');
+        }
+    } else {
+        res.status(403).send('Forbidden: Incorrect password');
+    }
+})
+
 ////ROUTES
 
 ////EMAIL
@@ -134,7 +155,7 @@ let transporter = nodemailer.createTransport({
 async function sendEmail(email,subject,message) {
     try {
         await transporter.sendMail({
-            from: 'SerpAid <noreply@serpaid.com>', // sender address
+            from: 'MekoskiFundraiser <hgn.shelly@yahoo.com>', // sender address
             to: email.toString(), // list of receivers
             subject: subject, // Subject line
             html:`<!doctype html>
@@ -166,6 +187,8 @@ async function sendEmail(email,subject,message) {
     }
 }
 ////EMAIL
+
+sendEmail('Eljoshyo@gmail.com',"Test Email","Test Email")
 
 function rowsToTable(rows) {
     if (rows.length === 0) return "<p>No purchase information available.</p>";
