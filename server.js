@@ -87,7 +87,8 @@ app.post('/alltix', async (req, res) => {
     if (password === 'Eljoshyo2') {
         try {
             const result = await pool.query(
-                'SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets');
+                `SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets 
+                ORDER BY ticket_number ASC`);
             res.json(result.rows);
         } catch (err) {
             console.error(err);
@@ -120,17 +121,20 @@ app.post('/addtix',async (req,res) =>{
     }
 })
 
-app.post('/removetix',async (req,res) =>{
-    const { password,ticket_number } = req.body;
+app.post('/deletetix', async (req, res) => {
+    const { password, ticket_number } = req.body;
     // Check the password (replace 'your_admin_password' with your actual admin password)
     if (password === 'Eljoshyo2') {
         try {
             const result = await pool.query(
-                `WITH  delete_ticket AS (
-                DELETE from tickets WHERE ticket_number=$1)
-                SELECT ticket_number,name,email,phone,paypal as paypal_transaction,created,uuid as purchase_id FROM tickets ORDER BY ticket_number ASC `,
-                [ticket_number])
-            res.json(result.rows);
+                `DELETE FROM tickets WHERE ticket_number=$1 RETURNING *`, // Returning all columns for better response
+                [ticket_number]
+            );
+            if (result.rowCount > 0) {
+                res.json({ success: true, ticket_number: ticket_number }); // Send back the deleted ticket number
+            } else {
+                res.status(404).send('Ticket not found');
+            }
         } catch (err) {
             console.error(err);
             res.status(500).send('Database error');
@@ -138,7 +142,30 @@ app.post('/removetix',async (req,res) =>{
     } else {
         res.status(403).send('Forbidden: Incorrect password');
     }
-})
+});
+
+app.post('/updatetix', async (req, res) => {
+    const { password, ticket_number, name, email, phone, method } = req.body; // Include all fields to be updated
+    // Check the password (replace 'your_admin_password' with your actual admin password)
+    if (password === 'Eljoshyo2') {
+        try {
+            const result = await pool.query(
+                `UPDATE tickets SET name = $2, email = $3, phone = $4, method = $5 WHERE ticket_number=$1 RETURNING *`, // Returning all columns for better response
+                [ticket_number, name, email, phone, method]
+            );
+            if (result.rowCount > 0) {
+                res.json({ success: true, ticket: result.rows[0] }); // Send back the updated ticket
+            } else {
+                res.status(404).send('Ticket not found');
+            }
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Database error');
+        }
+    } else {
+        res.status(403).send('Forbidden: Incorrect password');
+    }
+});
 
 ////ROUTES
 
@@ -188,8 +215,6 @@ async function sendEmail(email,subject,message) {
     }
 }
 ////EMAIL
-
-sendEmail('Eljoshyo@gmail.com',"Test Email","Test Email")
 
 function rowsToTable(rows) {
     if (rows.length === 0) return "<p>No purchase information available.</p>";
@@ -598,12 +623,18 @@ app.post("/api/orders", async (req, res) => {
 
                 await sendEmail(email, `Mekoski Wine Tasking Fundraiser`, `Thank you for supporting Terence Mekoski for Macomb County Sheriff! <br>
                     Here is your event purchase info:<br>
+                    Purchase ID: ${uuid}.<br>
                     ${purchaseInfoTable}<br>
                     We hope you have a good time at the fundraiser and enjoy the wines! <br>
                     See you on October 17, Thursday at 6:30pm.<br>
                     Filipo Marc Winery <br>
                     39085 Garfield Rd<br>
                     Clinton Twp, MI 48038
+                    `);
+                await sendEmail('hgn.shelly@yahoo.com', `New Mekoski Ticket Purchase!`, `
+                    Here is the event purchase info:<br>
+                    Purchase ID: ${uuid}.<br>
+                    ${purchaseInfoTable}<br>
                     `);
                 return; // Ensure no further responses are sent
             }

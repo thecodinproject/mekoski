@@ -29,29 +29,24 @@
             <button class='button' type="submit">Get Ticket Data</button>
         </form>
         
-        
         <h2>Add Ticket</h2>
         <form id="addTicketForm">
             <div class="form-group">
                 <label for="name">Name</label>
                 <input type="text" id="name" required placeholder="Name">
             </div>
-        
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" required placeholder="Email">
             </div>
-        
             <div class="form-group">
                 <label for="phone">Phone</label>
                 <input type="tel" id="phone" required placeholder="Phone">
             </div>
-        
             <div class="form-group">
                 <label for="method">Payment Method</label>
                 <input type="text" id="method" required placeholder="Cash, Check, etc.">
             </div>
-        
             <div class="form-group">
                 <label for="ticketPassword">Password</label>
                 <input type="password" id="ticketPassword" required placeholder="Admin Password">
@@ -59,10 +54,77 @@
             <div class="admin_button">
                 <button class='button' type="submit">Add Ticket</button>
             </div>
-            
         </form>
 
         <div id="result"></div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span tabindex="0" class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Ticket</h2>
+            <form id="editTicketForm">
+
+                <div class="form-group">
+                    <label for="editPassword">Password</label>
+                    <input type="password" id="editPassword" required placeholder="Admin Password">
+                </div>
+
+                <table id="editTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th >Phone</th>
+                            <th>Payment Method</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" id="editName" required></td>
+                            <td><input type="email" id="editEmail" required></td>
+                            <td style="max-width: 90px;"><input style="max-width: 75px;"t ype="tel" id="editPhone" required></td>
+                            <td style="max-width: 90px;"><input style="max-width: 75px;" type="text" id="editMethod" required></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="submit">Save</button>
+            </form>
+            <div id="editResult"></div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <span tabindex="0" class="close" onclick="closeDeleteModal()">&times;</span>
+            <h2>Delete Ticket</h2>
+            <p>Are you sure you want to delete this row?</p>
+            <input type="password" id="deletePassword" required placeholder="Admin Password">
+            <table id="deleteTable">
+                <thead>
+                    <tr>
+                        <th>Ticket_Number</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Payment Method</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="deleteId"></td>
+                        <td id="deleteName"></td>
+                        <td id="deleteEmail"></td>
+                        <td id="deletePhone"></td>
+                        <td id="deleteMethod"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button id="confirmDeleteButton">Confirm Delete</button>
+            <div id="deleteResult"></div>
+        </div>
     </div>
 
     <script>
@@ -82,7 +144,7 @@
                     displayTickets(tickets);
                 } else {
                     const message = await response.text();
-                    document.getElementById('result').innerHTML=message
+                    document.getElementById('result').innerHTML = message;
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -102,7 +164,7 @@
                 const response = await fetch('/addtix', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password, name, email, phone }),
+                    body: JSON.stringify({ password, name, email, phone, method }),
                 });
 
                 if (response.ok) {
@@ -110,7 +172,7 @@
                     displayTickets(tickets);
                 } else {
                     const message = await response.text();
-                    document.getElementById('result').innerHTML=message
+                    document.getElementById('result').innerHTML = message;
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -133,31 +195,169 @@
             // Create table header
             const header = table.createTHead();
             const headerRow = header.insertRow(0);
+
+            const editCell = headerRow.insertCell();
+            editCell.textContent = 'Edit';
+
             Object.keys(tickets[0]).forEach(key => {
                 const cell = headerRow.insertCell();
                 cell.textContent = key;
             });
 
+            const deleteCell = headerRow.insertCell();
+            deleteCell.textContent = 'Delete';
+
             // Create table body
             const tbody = table.createTBody();
             tickets.forEach(ticket => {
                 const row = tbody.insertRow();
+
+                // Create edit button
+                const editCell = row.insertCell();
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.onclick = () => openEditModal(ticket);
+                editCell.appendChild(editButton);
+
+                // Fill in ticket data
                 Object.values(ticket).forEach(value => {
                     const cell = row.insertCell();
                     cell.textContent = value;
                 });
+
+                // Create delete button
+                const deleteCell = row.insertCell();
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => openDeleteModal(row);
+                deleteCell.appendChild(deleteButton);
             });
 
             resultDiv.appendChild(table);
         }
 
-        function displayAddedTicket(ticket) {
-            const addResultDiv = document.getElementById('addResult');
-            addResultDiv.innerHTML = ''; // Clear previous results
+        function openEditModal(ticket) {
+            document.getElementById('editName').value = ticket.name;
+            document.getElementById('editEmail').value = ticket.email;
+            document.getElementById('editPhone').value = ticket.phone;
+            document.getElementById('editMethod').value = ticket.payment_method;
+            document.getElementById('editTicketForm').onsubmit = (event) => updateTicket(event, ticket.ticket_number);
+            document.getElementById('editModal').style.display = 'block';
+        }
 
-            const message = document.createElement('p');
-            message.textContent = 'Ticket added successfully: ' + JSON.stringify(ticket);
-            addResultDiv.appendChild(message);
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editResult').textContent=''
+        }
+
+        async function updateTicket(event, ticketNumber) {
+            event.preventDefault();
+            const password = document.getElementById('editPassword').value;
+            const name = document.getElementById('editName').value;
+            const email = document.getElementById('editEmail').value;
+            const phone = document.getElementById('editPhone').value;
+            const method = document.getElementById('editMethod').value;
+
+            try {
+                const response = await fetch('/updatetix', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, ticket_number: ticketNumber, name, email, phone, method }),
+                });
+
+                const resultMessage = document.getElementById('editResult');
+                if (response.ok) {
+                    resultMessage.textContent = "Row updated successfully!";
+                    updateRowInTable({ticket_number: ticketNumber,name:name,email:email,phone:phone,payment_method:method});
+                    
+                } else {
+                    const errorMessage = await response.text();
+                    resultMessage.textContent = "Did not update: " + errorMessage;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        }
+
+        function updateRowInTable(updatedTicket) {
+            const resultDiv = document.getElementById('result');
+            const table = resultDiv.querySelector('table');
+            const rows = table.getElementsByTagName('tbody')[0].rows;
+
+            for (let row of rows) {
+                if (row.cells[1].textContent === updatedTicket.ticket_number.toString()) { // Assuming ticket_number is the second column
+                    row.cells[2].textContent = updatedTicket.name;
+                    row.cells[3].textContent = updatedTicket.email;
+                    row.cells[4].textContent = updatedTicket.phone;
+                    row.cells[6].textContent = updatedTicket.payment_method;
+                    break;
+                }
+            }
+        }
+
+        function openDeleteModal(row) {
+            // Get the row's cells
+            const cells = row.getElementsByTagName('td');
+
+            // Populate the modal with the current row's data
+            document.getElementById('deleteId').textContent = cells[1].textContent;
+            document.getElementById('deleteName').textContent = cells[2].textContent; // Assuming name is in the second column
+            document.getElementById('deleteEmail').textContent = cells[3].textContent; // Assuming email is in the third column
+            document.getElementById('deletePhone').textContent = cells[4].textContent; // Assuming phone is in the fourth column
+            document.getElementById('deleteMethod').textContent = cells[6].textContent; // Assuming payment method is in the fifth column
+
+            // Set the confirm delete button action
+            document.getElementById('confirmDeleteButton').onclick = () => confirmDelete(cells[1].textContent); // Assuming ticket_number is in the first column
+
+            // Show the delete modal
+            document.getElementById('deleteModal').style.display = 'block';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            document.getElementById('deleteResult').textContent=''
+        }
+
+        async function confirmDelete(ticketNumber) {
+            const password = document.getElementById('deletePassword').value;
+            try {
+                const response = await fetch('/deletetix', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password, ticket_number: ticketNumber }),
+                });
+
+                const resultMessage = document.getElementById('deleteResult');
+                if (response.ok) {
+                    resultMessage.textContent = "Row Deleted!";
+                    removeRowFromTable(ticketNumber);
+                } else {
+                    const errorMessage = await response.text();
+                    resultMessage.textContent = "Did not Delete Row: " + errorMessage;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again later.');
+            }
+        }
+
+        // Close modal function to handle general modal closing
+        function closeModal() {
+            document.getElementById('contactModal').style.display = 'none';
+        }
+
+        function removeRowFromTable(ticketNumber) {
+            const resultDiv = document.getElementById('result');
+            const table = resultDiv.querySelector('table');
+            const rows = table.getElementsByTagName('tbody')[0].rows;
+
+            for (let row of rows) {
+                if (row.cells[1].textContent === ticketNumber.toString()) { // Assuming ticket_number is the second column
+                    row.remove();
+                    break;
+                }
+            }
         }
     </script>
 </body>
