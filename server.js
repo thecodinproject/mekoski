@@ -84,7 +84,7 @@ app.post('/alltix', async (req, res) => {
     const { password } = req.body;
 
     // Check the password (replace 'your_admin_password' with your actual admin password)
-    if (password === 'Eljoshyo2') {
+    if (password === process.env.ADMIN_PASS) {
         try {
             const result = await pool.query(
                 `SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets 
@@ -102,7 +102,7 @@ app.post('/alltix', async (req, res) => {
 app.post('/addtix',async (req,res) =>{
     const { password,name,email,phone,method } = req.body;
     // Check the password (replace 'your_admin_password' with your actual admin password)
-    if (password === 'Eljoshyo2') {
+    if (password === process.env.ADMIN_PASS) {
         try {
             const result = await pool.query(
                 `WITH  insert_ticket AS (
@@ -124,7 +124,7 @@ app.post('/addtix',async (req,res) =>{
 app.post('/deletetix', async (req, res) => {
     const { password, ticket_number } = req.body;
     // Check the password (replace 'your_admin_password' with your actual admin password)
-    if (password === 'Eljoshyo2') {
+    if (password === process.env.ADMIN_PASS) {
         try {
             const result = await pool.query(
                 `DELETE FROM tickets WHERE ticket_number=$1 RETURNING *`, // Returning all columns for better response
@@ -147,7 +147,7 @@ app.post('/deletetix', async (req, res) => {
 app.post('/updatetix', async (req, res) => {
     const { password, ticket_number, name, email, phone, method } = req.body; // Include all fields to be updated
     // Check the password (replace 'your_admin_password' with your actual admin password)
-    if (password === 'Eljoshyo2') {
+    if (password === process.env.ADMIN_PASS) {
         try {
             const result = await pool.query(
                 `UPDATE tickets SET name = $2, email = $3, phone = $4, method = $5 WHERE ticket_number=$1 RETURNING *`, // Returning all columns for better response
@@ -176,7 +176,7 @@ let transporter = nodemailer.createTransport({
     secure: false, // true for 465, false for other ports
     auth: {
         user: "serpaidnow@gmail.com", // generated brevo user
-        pass: "TCAnUgFw0bkHYpaV", // generated brevo password
+        pass: process.env.BREVO_PASS, // generated brevo password
     },
 });
 
