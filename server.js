@@ -175,7 +175,7 @@ let transporter = nodemailer.createTransport({
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-        user: "serpaidnow@gmail.com", // generated brevo user
+        user: process.env.BREVO_USER, // generated brevo user
         pass: process.env.BREVO_PASS, // generated brevo password
     },
 });
@@ -214,6 +214,7 @@ async function sendEmail(email,subject,message) {
         return { success: false, error: "Failed to send email" };
     }
 }
+sendEmail('joshcard1988@yahoo.com',"Hello From Brevo","Test Message!")
 ////EMAIL
 
 function rowsToTable(rows) {
