@@ -110,7 +110,7 @@ app.post('/addtix',async (req,res) =>{
                     SELECT $1,$2,$3,$4,$5)
                     SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets 
                 ORDER BY ticket_number DESC `,
-                [name,email,phone,generateHexCode(12)],method)
+                [name,email,phone,generateHexCode(12),method])
             res.json(result.rows);
         } catch (err) {
             console.error(err);
@@ -214,7 +214,8 @@ async function sendEmail(email,subject,message) {
         return { success: false, error: "Failed to send email" };
     }
 }
-sendEmail('joshcard1988@yahoo.com',"Hello From Brevo","Test Message!")
+
+// sendEmail('joshcard1988@yahoo.com',"Hello From Brevo","Test Message!")
 ////EMAIL
 
 function rowsToTable(rows) {
