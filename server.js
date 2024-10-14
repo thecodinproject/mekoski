@@ -107,7 +107,10 @@ app.post('/addtix',async (req,res) =>{
             const result = await pool.query(
                 `WITH  insert_ticket AS (
                     INSERT into tickets (name,email,phone,uuid,method)
-                    SELECT $1,$2,$3,$4,$5)
+                    SELECT $1,$2,$3,$4,$5
+                    RETURNING *)
+                    SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM insert_ticket
+                    UNION ALL
                     SELECT ticket_number,name,email,phone,paypal as paypal_id,method as payment_method,created,uuid as purchase_id FROM tickets 
                 ORDER BY ticket_number DESC `,
                 [name,email,phone,generateHexCode(12),method])
